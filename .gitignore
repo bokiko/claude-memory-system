@@ -1,0 +1,13 @@
+# Index cache
+scripts/.index.json
+scripts/.cache/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*.swo
+.vscode/
+.idea/
