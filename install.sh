@@ -6,36 +6,78 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
 NC='\033[0m' # No Color
-
-echo -e "${BLUE}"
-echo "╔═══════════════════════════════════════════════════════════╗"
-echo "║           Claude Memory System - Setup Wizard             ║"
-echo "║         Reduce context usage by 90%                       ║"
-echo "╚═══════════════════════════════════════════════════════════╝"
-echo -e "${NC}"
 
 # Detect script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Check for --uninstall flag
+if [ "$1" = "--uninstall" ]; then
+    echo -e "${YELLOW}Uninstalling bloxcue...${NC}"
+    echo ""
+
+    # Remove hooks
+    if [ -f "$HOME/.claude/hooks/memory-retrieve.sh" ]; then
+        rm -f "$HOME/.claude/hooks/memory-retrieve.sh"
+        echo "  Removed: ~/.claude/hooks/memory-retrieve.sh"
+    fi
+
+    echo ""
+    echo -e "${YELLOW}Note: Your memory files are preserved.${NC}"
+    echo "  To fully remove, delete these manually:"
+    echo "    rm -rf ~/.claude-memory"
+    echo "    rm -rf ./claude-memory"
+    echo ""
+    echo "  Also remove the hook from ~/.claude/settings.json"
+    echo ""
+    exit 0
+fi
+
+# Banner
+echo -e "${BLUE}"
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║                    bloxcue installer                      ║"
+echo "║         Context blocks for Claude Code                    ║"
+echo "║         Save 60%+ of your tokens                          ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+echo -e "${NC}"
+
+# Check Python
+if ! command -v python3 &> /dev/null; then
+    echo -e "${RED}Error: Python 3 is required but not installed.${NC}"
+    echo ""
+    echo "Install Python 3:"
+    echo "  macOS:        brew install python3"
+    echo "  Ubuntu/Debian: sudo apt install python3"
+    echo "  Fedora:       sudo dnf install python3"
+    echo ""
+    exit 1
+fi
+
+echo -e "${GREEN}✓ Python 3 found${NC}"
+echo ""
+
 # ============================================
 # STEP 1: Installation Scope
 # ============================================
-echo -e "${YELLOW}Step 1/4: Installation Scope${NC}"
-echo ""
-echo "Where should Claude Memory be installed?"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${YELLOW}Step 1/3: Where to install?${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 echo "  1) Global (~/.claude-memory)"
-echo "     Best for: Infrastructure docs, personal notes, cross-project knowledge"
+echo "     Your personal knowledge base - accessible from any project"
+echo "     Best for: general docs, references, personal notes"
 echo ""
 echo "  2) Project-specific (./claude-memory)"
-echo "     Best for: Project-only context, team sharing via git"
+echo "     Lives in your current project folder"
+echo "     Best for: project docs, team sharing via git"
 echo ""
-echo "  3) Both (global + project)"
-echo "     Best for: Personal infra docs + project-specific code context"
+echo "  3) Both (recommended)"
+echo "     Global for personal stuff + project for project stuff"
 echo ""
-read -p "Choose [1/2/3] (default: 1): " SCOPE_CHOICE
-SCOPE_CHOICE=${SCOPE_CHOICE:-1}
+read -p "Choose [1/2/3] (default: 3): " SCOPE_CHOICE
+SCOPE_CHOICE=${SCOPE_CHOICE:-3}
 
 case $SCOPE_CHOICE in
     1) INSTALL_PATHS=("$HOME/.claude-memory") ;;
@@ -49,32 +91,40 @@ echo ""
 # ============================================
 # STEP 2: Directory Structure
 # ============================================
-echo -e "${YELLOW}Step 2/4: Directory Structure${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${YELLOW}Step 2/3: How to organize your blocks?${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-echo "How do you want to organize your knowledge?"
+echo "  1) By Subject (recommended for most users)"
+echo "     guides/ references/ projects/ configs/ notes/"
 echo ""
-echo "  1) By Subject (recommended)"
-echo "     infrastructure/, projects/, runbooks/, decisions/"
+echo "  2) By Project (for freelancers/agencies)"
+echo "     client-a/ client-b/ shared/"
 echo ""
-echo "  2) By Project"
-echo "     project-a/, project-b/, shared/"
+echo "  3) Developer Setup"
+echo "     apis/ databases/ deployment/ frontend/ backend/"
 echo ""
-echo "  3) Minimal"
-echo "     docs/, notes/"
+echo "  4) DevOps/SysAdmin"
+echo "     servers/ networking/ monitoring/ security/ runbooks/"
 echo ""
-echo "  4) Custom"
-echo "     You specify the folders"
+echo "  5) Minimal"
+echo "     docs/ notes/"
 echo ""
-read -p "Choose [1/2/3/4] (default: 1): " STRUCTURE_CHOICE
+echo "  6) Custom (you specify)"
+echo ""
+read -p "Choose [1-6] (default: 1): " STRUCTURE_CHOICE
 STRUCTURE_CHOICE=${STRUCTURE_CHOICE:-1}
 
 case $STRUCTURE_CHOICE in
     1)
-        FOLDERS=("infrastructure/servers" "infrastructure/network" "infrastructure/services" "projects" "runbooks" "decisions")
+        FOLDERS=("guides" "references" "projects" "configs" "notes")
         ;;
     2)
         echo ""
-        read -p "Enter project names (comma-separated, e.g., api,frontend,shared): " PROJECTS
+        read -p "Enter project/client names (comma-separated): " PROJECTS
+        if [ -z "$PROJECTS" ]; then
+            PROJECTS="project-a,project-b"
+        fi
         IFS=',' read -ra PROJECT_ARRAY <<< "$PROJECTS"
         FOLDERS=()
         for proj in "${PROJECT_ARRAY[@]}"; do
@@ -83,11 +133,21 @@ case $STRUCTURE_CHOICE in
         FOLDERS+=("shared")
         ;;
     3)
-        FOLDERS=("docs" "notes")
+        FOLDERS=("apis" "databases" "deployment" "frontend" "backend" "notes")
         ;;
     4)
+        FOLDERS=("servers" "networking" "monitoring" "security" "runbooks")
+        ;;
+    5)
+        FOLDERS=("docs" "notes")
+        ;;
+    6)
         echo ""
+        echo "Examples: guides, projects, apis, clients, notes"
         read -p "Enter folder names (comma-separated): " CUSTOM_FOLDERS
+        if [ -z "$CUSTOM_FOLDERS" ]; then
+            CUSTOM_FOLDERS="docs,notes"
+        fi
         IFS=',' read -ra FOLDERS <<< "$CUSTOM_FOLDERS"
         ;;
 esac
@@ -95,36 +155,25 @@ esac
 echo ""
 
 # ============================================
-# STEP 3: Install Hooks
+# STEP 3: Confirm
 # ============================================
-echo -e "${YELLOW}Step 3/4: Auto-Retrieval Hooks${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${YELLOW}Step 3/3: Confirm${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-echo "Install Claude Code hooks for automatic context injection?"
-echo "This adds relevant memory to your prompts automatically."
+echo "Ready to install:"
 echo ""
-read -p "Install hooks? [Y/n] (default: Y): " INSTALL_HOOKS
-INSTALL_HOOKS=${INSTALL_HOOKS:-Y}
-
-echo ""
-
-# ============================================
-# STEP 4: Confirm
-# ============================================
-echo -e "${YELLOW}Step 4/4: Confirm Installation${NC}"
-echo ""
-echo "Ready to install with these settings:"
-echo ""
-echo -e "  ${GREEN}Install paths:${NC}"
+echo -e "  ${GREEN}Locations:${NC}"
 for path in "${INSTALL_PATHS[@]}"; do
-    echo "    - $path"
+    echo "    → $path"
 done
 echo ""
 echo -e "  ${GREEN}Folders:${NC}"
 for folder in "${FOLDERS[@]}"; do
-    echo "    - $folder/"
+    echo "    → $folder/"
 done
 echo ""
-echo -e "  ${GREEN}Hooks:${NC} $([ "$INSTALL_HOOKS" = "Y" ] || [ "$INSTALL_HOOKS" = "y" ] && echo "Yes" || echo "No")"
+echo -e "  ${GREEN}Auto-retrieval:${NC} Enabled (hooks will be installed)"
 echo ""
 read -p "Proceed? [Y/n]: " CONFIRM
 CONFIRM=${CONFIRM:-Y}
@@ -148,8 +197,9 @@ for INSTALL_PATH in "${INSTALL_PATHS[@]}"; do
 
     # Create folder structure
     for folder in "${FOLDERS[@]}"; do
-        mkdir -p "$INSTALL_PATH/$folder"
-        echo "  Created: $folder/"
+        folder_clean=$(echo "$folder" | xargs)  # trim whitespace
+        mkdir -p "$INSTALL_PATH/$folder_clean"
+        echo "  ✓ $folder_clean/"
     done
 
     # Create scripts directory
@@ -157,107 +207,135 @@ for INSTALL_PATH in "${INSTALL_PATHS[@]}"; do
 
     # Copy indexer
     cp "$SCRIPT_DIR/scripts/indexer.py" "$INSTALL_PATH/scripts/"
-    echo "  Installed: scripts/indexer.py"
+    echo "  ✓ scripts/indexer.py"
 
-    # Create example file
-    FIRST_FOLDER="${FOLDERS[0]}"
-    cat > "$INSTALL_PATH/$FIRST_FOLDER/example.md" << 'EXAMPLE'
+    # Create getting started guide
+    FIRST_FOLDER=$(echo "${FOLDERS[0]}" | xargs)
+    cat > "$INSTALL_PATH/$FIRST_FOLDER/getting-started.md" << 'EXAMPLE'
 ---
-title: Example Document
-category: example
-tags: [example, template]
-updated: $(date +%Y-%m-%d)
+title: Getting Started with bloxcue
+category: guides
+tags: [bloxcue, tutorial, getting-started]
 ---
 
-# Example Document
+# Getting Started with bloxcue
 
-This is an example memory file. Replace with your own content.
+Welcome! This is your first context block. Here's how to use bloxcue:
 
-## Structure
+## Creating Blocks
 
-Each file should have:
-1. YAML frontmatter (title, category, tags)
-2. Markdown content
-3. Focused, single-topic information
+Each block is a markdown file with:
+
+1. **Frontmatter** (the YAML at the top)
+   - `title`: What this block is about
+   - `category`: Folder it belongs to
+   - `tags`: Keywords for better search
+
+2. **Content** (everything after the frontmatter)
+   - Keep it focused on one topic
+   - Use headers to organize
+   - Include code snippets, commands, links
+
+## Example Block
+
+```markdown
+---
+title: My API Reference
+category: apis
+tags: [api, rest, authentication]
+---
+
+# My API Reference
+
+Base URL: https://api.example.com
+
+## Authentication
+Use Bearer token in headers...
+```
 
 ## Tips
 
-- One topic per file
-- Use descriptive tags
-- Keep files under 500 lines
-- Run indexer after adding files
+- **One topic per file** - Better search precision
+- **Descriptive tags** - `[deployment, aws, production]` not just `[deploy]`
+- **Re-index after adding** - Run the indexer to update search
+
+## Commands
+
+```bash
+# Index all blocks
+python3 ~/.claude-memory/scripts/indexer.py
+
+# Search blocks
+python3 ~/.claude-memory/scripts/indexer.py --search "keyword"
+
+# List all blocks
+python3 ~/.claude-memory/scripts/indexer.py --list
+```
+
+## Next Steps
+
+1. Delete this file (or keep it as reference)
+2. Create your first real block
+3. Ask Claude about a topic you documented
+
+Claude will automatically retrieve relevant blocks!
 EXAMPLE
-    echo "  Created: $FIRST_FOLDER/example.md"
+    echo "  ✓ $FIRST_FOLDER/getting-started.md"
 
-    # Create CLAUDE.md pointer
-    cat > "$INSTALL_PATH/CLAUDE.md" << CLAUDEMD
-# Claude Memory
-
-Knowledge base location: $INSTALL_PATH
-
-## Search
-
-\`\`\`bash
-python3 $INSTALL_PATH/scripts/indexer.py --search "query"
-\`\`\`
-
-## Structure
-
-$(for folder in "${FOLDERS[@]}"; do echo "- $folder/"; done)
-
-## Index
-
-Run after adding new files:
-\`\`\`bash
-python3 $INSTALL_PATH/scripts/indexer.py
-\`\`\`
-CLAUDEMD
-    echo "  Created: CLAUDE.md"
+    echo ""
 done
 
 # ============================================
 # INSTALL HOOKS
 # ============================================
-if [ "$INSTALL_HOOKS" = "Y" ] || [ "$INSTALL_HOOKS" = "y" ]; then
-    echo ""
-    echo -e "${GREEN}Installing hooks...${NC}"
+echo -e "${GREEN}Installing auto-retrieval hooks...${NC}"
 
-    HOOKS_DIR="$HOME/.claude/hooks"
-    mkdir -p "$HOOKS_DIR"
+HOOKS_DIR="$HOME/.claude/hooks"
+mkdir -p "$HOOKS_DIR"
 
-    # Copy hook files
-    cp "$SCRIPT_DIR/hooks/memory-retrieve.sh" "$HOOKS_DIR/"
-    chmod +x "$HOOKS_DIR/memory-retrieve.sh"
-    echo "  Installed: memory-retrieve.sh"
+# Copy hook files
+cp "$SCRIPT_DIR/hooks/memory-retrieve.sh" "$HOOKS_DIR/"
+chmod +x "$HOOKS_DIR/memory-retrieve.sh"
+echo "  ✓ memory-retrieve.sh"
 
-    # Update the hook to use correct path
-    MEMORY_PATH="${INSTALL_PATHS[0]}"
-    sed -i.bak "s|MEMORY_PATH=.*|MEMORY_PATH=\"$MEMORY_PATH\"|" "$HOOKS_DIR/memory-retrieve.sh" 2>/dev/null || \
+# Update the hook to use correct path
+MEMORY_PATH="${INSTALL_PATHS[0]}"
+if [[ "$OSTYPE" == "darwin"* ]]; then
     sed -i '' "s|MEMORY_PATH=.*|MEMORY_PATH=\"$MEMORY_PATH\"|" "$HOOKS_DIR/memory-retrieve.sh"
-    rm -f "$HOOKS_DIR/memory-retrieve.sh.bak"
+else
+    sed -i "s|MEMORY_PATH=.*|MEMORY_PATH=\"$MEMORY_PATH\"|" "$HOOKS_DIR/memory-retrieve.sh"
+fi
 
-    # Check if settings.json exists
-    SETTINGS_FILE="$HOME/.claude/settings.json"
-    if [ -f "$SETTINGS_FILE" ]; then
-        echo ""
-        echo -e "${YELLOW}Note: ~/.claude/settings.json exists.${NC}"
-        echo "Add this hook configuration manually:"
-        echo ""
-        cat << 'HOOKCONFIG'
-{
-  "hooks": {
-    "UserPromptSubmit": [{
-      "hooks": [{
-        "type": "command",
-        "command": "~/.claude/hooks/memory-retrieve.sh"
-      }]
-    }]
-  }
-}
-HOOKCONFIG
+# Handle settings.json
+SETTINGS_FILE="$HOME/.claude/settings.json"
+HOOK_ENTRY='"UserPromptSubmit": [{"hooks": [{"type": "command", "command": "~/.claude/hooks/memory-retrieve.sh"}]}]'
+
+if [ -f "$SETTINGS_FILE" ]; then
+    # Check if hooks section already contains our hook
+    if grep -q "memory-retrieve.sh" "$SETTINGS_FILE" 2>/dev/null; then
+        echo "  ✓ Hook already in settings.json"
     else
-        # Create settings.json
-        cat > "$SETTINGS_FILE" << 'SETTINGS'
+        echo ""
+        echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e "${YELLOW}Action needed: Add hook to settings.json${NC}"
+        echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo ""
+        echo "Your ~/.claude/settings.json exists. Add this to the hooks section:"
+        echo ""
+        echo -e "${CYAN}\"UserPromptSubmit\": [{${NC}"
+        echo -e "${CYAN}  \"hooks\": [{${NC}"
+        echo -e "${CYAN}    \"type\": \"command\",${NC}"
+        echo -e "${CYAN}    \"command\": \"~/.claude/hooks/memory-retrieve.sh\"${NC}"
+        echo -e "${CYAN}  }]${NC}"
+        echo -e "${CYAN}}]${NC}"
+        echo ""
+        echo "Or ask Claude to add it for you!"
+        echo ""
+    fi
+else
+    # Create settings.json with hook
+    mkdir -p "$HOME/.claude"
+    cat > "$SETTINGS_FILE" << 'SETTINGS'
 {
   "hooks": {
     "UserPromptSubmit": [{
@@ -269,8 +347,7 @@ HOOKCONFIG
   }
 }
 SETTINGS
-        echo "  Created: ~/.claude/settings.json"
-    fi
+    echo "  ✓ Created ~/.claude/settings.json with hooks"
 fi
 
 # ============================================
@@ -279,7 +356,11 @@ fi
 echo ""
 echo -e "${GREEN}Running initial index...${NC}"
 for INSTALL_PATH in "${INSTALL_PATHS[@]}"; do
-    python3 "$INSTALL_PATH/scripts/indexer.py" 2>/dev/null || echo "  Index will run when you add files"
+    if python3 "$INSTALL_PATH/scripts/indexer.py" 2>/dev/null; then
+        :
+    else
+        echo "  Index will update when you add more files"
+    fi
 done
 
 # ============================================
@@ -287,22 +368,33 @@ done
 # ============================================
 echo ""
 echo -e "${BLUE}╔═══════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║                    Setup Complete!                        ║${NC}"
+echo -e "${BLUE}║                   ✓ bloxcue installed!                    ║${NC}"
 echo -e "${BLUE}╚═══════════════════════════════════════════════════════════╝${NC}"
 echo ""
-echo "Next steps:"
-echo ""
-echo "  1. Add your knowledge files to:"
+echo -e "${GREEN}Your context blocks are ready at:${NC}"
 for INSTALL_PATH in "${INSTALL_PATHS[@]}"; do
-    echo "     $INSTALL_PATH"
+    echo "  → $INSTALL_PATH"
 done
 echo ""
-echo "  2. Index your files:"
-echo "     python3 ${INSTALL_PATHS[0]}/scripts/indexer.py"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${YELLOW}Quick start:${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-echo "  3. Search:"
-echo "     python3 ${INSTALL_PATHS[0]}/scripts/indexer.py --search \"keyword\""
+echo "  1. Restart Claude Code (to load the hook)"
 echo ""
-echo "  4. Update your project's CLAUDE.md to point to memory system"
+echo "  2. Ask Claude to help you create blocks:"
 echo ""
-echo -e "${GREEN}Enjoy 90% less context usage!${NC}"
+echo -e "     ${GREEN}\"Help me create a block for [topic]. Read the${NC}"
+echo -e "     ${GREEN} getting-started guide at ~/.claude-memory/\"${NC}"
+echo ""
+echo "  3. That's it! Claude retrieves context automatically."
+echo ""
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+echo "Commands:"
+echo "  Index:   python3 ${INSTALL_PATHS[0]}/scripts/indexer.py"
+echo "  Search:  python3 ${INSTALL_PATHS[0]}/scripts/indexer.py --search \"keyword\""
+echo "  List:    python3 ${INSTALL_PATHS[0]}/scripts/indexer.py --list"
+echo ""
+echo -e "${GREEN}Enjoy 60%+ token savings!${NC}"
+echo ""

@@ -1,11 +1,13 @@
 #!/bin/bash
 #
-# Claude Memory Retrieve Hook
+# bloxcue Auto-Retrieval Hook
 #
-# Automatically injects relevant context from memory system
-# when user prompts contain matching keywords.
+# Automatically injects relevant context blocks when user prompts
+# contain matching keywords.
 #
 # Install: Copy to ~/.claude/hooks/ and add to settings.json
+#
+# Debug: Set BLOXCUE_DEBUG=1 to see what's happening
 #
 
 set -e
@@ -13,34 +15,85 @@ set -e
 # Configuration - Updated by install.sh
 MEMORY_PATH="$HOME/.claude-memory"
 MAX_RESULTS=3
-MAX_CONTEXT_CHARS=2000
+MAX_CONTEXT_CHARS=3000
+MIN_QUERY_LENGTH=5
+
+# Debug mode
+DEBUG="${BLOXCUE_DEBUG:-0}"
+
+debug_log() {
+    if [ "$DEBUG" = "1" ]; then
+        echo "[bloxcue] $1" >&2
+    fi
+}
 
 # Read input from Claude
 INPUT=$(cat)
 
-# Extract user message
+debug_log "Received input"
+
+# Extract user message using Python
 USER_MESSAGE=$(echo "$INPUT" | python3 -c "
 import sys, json
 try:
     data = json.load(sys.stdin)
     print(data.get('user_prompt', ''))
-except:
+except Exception as e:
     pass
 " 2>/dev/null)
 
+debug_log "User message: ${USER_MESSAGE:0:50}..."
+
 # Skip if no message or too short
-if [ -z "$USER_MESSAGE" ] || [ ${#USER_MESSAGE} -lt 10 ]; then
+if [ -z "$USER_MESSAGE" ] || [ ${#USER_MESSAGE} -lt $MIN_QUERY_LENGTH ]; then
+    debug_log "Message too short, skipping"
+    echo '{"result": "continue"}'
+    exit 0
+fi
+
+# Skip common non-contextual messages
+SKIP_PATTERNS=(
+    "^(hi|hello|hey|thanks|thank you|ok|okay|yes|no|sure|got it)$"
+    "^(what|how|why|can you|could you|please|help)$"
+    "^[0-9]+$"
+)
+
+LOWER_MSG=$(echo "$USER_MESSAGE" | tr '[:upper:]' '[:lower:]' | xargs)
+for pattern in "${SKIP_PATTERNS[@]}"; do
+    if echo "$LOWER_MSG" | grep -qiE "$pattern"; then
+        debug_log "Skipping common phrase: $LOWER_MSG"
+        echo '{"result": "continue"}'
+        exit 0
+    fi
+done
+
+# Check if indexer exists
+if [ ! -f "$MEMORY_PATH/scripts/indexer.py" ]; then
+    debug_log "Indexer not found at $MEMORY_PATH/scripts/indexer.py"
     echo '{"result": "continue"}'
     exit 0
 fi
 
 # Search memory for relevant context
+debug_log "Searching for: $USER_MESSAGE"
 SEARCH_RESULTS=$(python3 "$MEMORY_PATH/scripts/indexer.py" --search "$USER_MESSAGE" --limit $MAX_RESULTS --json 2>/dev/null || echo "[]")
 
 # Check if we have results
-RESULT_COUNT=$(echo "$SEARCH_RESULTS" | python3 -c "import sys,json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
+RESULT_COUNT=$(echo "$SEARCH_RESULTS" | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    # Only count results with meaningful scores
+    good_results = [r for r in data if r.get('score', 0) > 5]
+    print(len(good_results))
+except:
+    print(0)
+" 2>/dev/null || echo "0")
+
+debug_log "Found $RESULT_COUNT relevant results"
 
 if [ "$RESULT_COUNT" = "0" ]; then
+    debug_log "No relevant results, skipping"
     echo '{"result": "continue"}'
     exit 0
 fi
@@ -50,7 +103,10 @@ CONTEXT=$(python3 << PYTHON
 import json
 import sys
 
-results = json.loads('''$SEARCH_RESULTS''')
+try:
+    results = json.loads('''$SEARCH_RESULTS''')
+except:
+    results = []
 
 if not results:
     print("")
@@ -60,12 +116,28 @@ output = []
 total_chars = 0
 max_chars = $MAX_CONTEXT_CHARS
 
-for r in results:
+# Only include results with good scores
+good_results = [r for r in results if r.get('score', 0) > 5]
+
+for r in good_results:
     title = r.get('title', 'Unknown')
     path = r.get('path', '')
-    content = r.get('content', '')[:500]  # Limit per-file
+    content = r.get('content', '')
+    score = r.get('score', 0)
 
-    entry = f"### {title} ({path})\n{content}\n"
+    # Limit content per block based on score
+    if score > 20:
+        max_content = 800  # High relevance - more content
+    elif score > 10:
+        max_content = 500  # Medium relevance
+    else:
+        max_content = 300  # Lower relevance
+
+    content = content[:max_content]
+    if len(r.get('content', '')) > max_content:
+        content += "..."
+
+    entry = f"### {title}\n*Source: {path}*\n\n{content}\n"
 
     if total_chars + len(entry) > max_chars:
         break
@@ -74,8 +146,8 @@ for r in results:
     total_chars += len(entry)
 
 if output:
-    header = "📚 Relevant context from memory:\n\n"
-    print(header + "\n".join(output))
+    header = "📚 **Relevant context from bloxcue:**\n\n"
+    print(header + "\n---\n".join(output))
 else:
     print("")
 PYTHON
@@ -83,10 +155,13 @@ PYTHON
 
 # Output result
 if [ -n "$CONTEXT" ]; then
+    debug_log "Injecting context (${#CONTEXT} chars)"
+
     # Escape for JSON
     ESCAPED_CONTEXT=$(echo "$CONTEXT" | python3 -c "import sys,json; print(json.dumps(sys.stdin.read()))")
 
     echo "{\"result\": \"continue\", \"message\": $ESCAPED_CONTEXT}"
 else
+    debug_log "No context to inject"
     echo '{"result": "continue"}'
 fi
