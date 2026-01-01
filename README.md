@@ -15,11 +15,15 @@
     <img src="https://img.shields.io/badge/setup-5%20minutes-success" alt="5 min setup" />
   </a>
   <a href="#token-savings">
-    <img src="https://img.shields.io/badge/saves-90%25%20tokens-orange" alt="90% savings" />
+    <img src="https://img.shields.io/badge/saves-60%25+%20tokens-orange" alt="60%+ savings" />
   </a>
   <a href="https://github.com/bokiko/bloxcue/blob/main/LICENSE">
     <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License" />
   </a>
+</p>
+
+<p>
+  <a href="https://bokiko.io">bokiko.io</a> · <a href="https://twitter.com/bokiko">@bokiko</a>
 </p>
 
 </div>
@@ -28,13 +32,15 @@
 
 ## The Story
 
-After using [Continuous-Claude](https://github.com/bokiko/continuous-claude-guide) for a while, we noticed something: our `CLAUDE.md` files kept growing. Every time we documented a server, added a runbook, or saved a decision... the file got bigger.
+After using [Continuous-Claude](https://github.com/AnandChowdhary/continuous-claude) (created by [Anand Chowdhary](https://github.com/AnandChowdhary)) for a while, we noticed something: our `CLAUDE.md` files kept growing. Every time we documented something new, added a guide, or saved a configuration... the file got bigger.
 
 **The problem?** Claude loads your entire `CLAUDE.md` on every single prompt. That 30KB file? Loaded 20+ times per session. That's hundreds of thousands of tokens wasted on stuff Claude didn't even need for that prompt.
 
-**The idea:** What if Claude could pull in just the context it needs, like building blocks? You ask about your Plex server, Claude grabs the Plex block. You ask about deployment, Claude grabs the deployment block. Everything else stays on the shelf.
+**Why does this matter?** Whether you're on Claude Pro ($20/month) or Pro Max ($200/month), you have a monthly token budget. Wasting 60%+ of your tokens on irrelevant context means less tokens for actual thinking, coding, and building your projects.
 
-That's **bloxcue** - context blocks that get cued up when you need them.
+**The idea:** What if Claude could pull in just the context it needs, like building blocks? You ask about your database, Claude grabs the database block. You ask about deployment, Claude grabs the deployment block. Everything else stays on the shelf.
+
+That's **bloxcue** - context blocks that get cued up when you need them. More tokens for thinking, less tokens wasted on context you don't need.
 
 ---
 
@@ -42,10 +48,10 @@ That's **bloxcue** - context blocks that get cued up when you need them.
 
 | If you're... | bloxcue helps you... |
 |--------------|----------------------|
-| **A Claude Code power user** | Stop burning tokens on context you're not using |
-| **Managing infrastructure** | Keep server docs, runbooks, and configs organized and searchable |
-| **Working on multiple projects** | Switch context without reloading everything |
-| **Paying for Claude API** | Save ~$350/month on Opus (seriously) |
+| **A Claude Code user** | Stop burning tokens on context you're not using |
+| **Managing multiple configs** | Keep docs, guides, and configs organized and searchable |
+| **Working on several projects** | Switch context without reloading everything |
+| **Hitting token limits** | Stretch your monthly budget 60%+ further |
 | **New to Claude Code** | Start with good habits from day one |
 
 ---
@@ -54,28 +60,30 @@ That's **bloxcue** - context blocks that get cued up when you need them.
 
 **Before bloxcue:**
 ```
-You: "How do I restart the Plex server?"
+You: "How do I deploy to production?"
 
 Claude loads: ENTIRE CLAUDE.md (34KB)
-  - Your git workflow (not needed)
-  - Your API keys reference (not needed)
-  - Your 15 project configs (not needed)
-  - Your Plex server docs (NEEDED!)
+  - Your coding standards (not needed)
+  - Your API documentation (not needed)
+  - Your 10 different project configs (not needed)
+  - Your deployment guide (NEEDED!)
   - Everything else (not needed)
 
-Result: 8,600 tokens used, only 500 were relevant
+Result: 8,600 tokens used, only 800 were relevant
+= 90% of tokens wasted
 ```
 
 **After bloxcue:**
 ```
-You: "How do I restart the Plex server?"
+You: "How do I deploy to production?"
 
-Claude loads: Just the Plex server block (2KB)
-  - SSH command
-  - Service name
-  - Troubleshooting tips
+Claude loads: Just the deployment block (1.5KB)
+  - Environment setup
+  - Deploy commands
+  - Rollback procedures
 
-Result: 500 tokens used, all relevant
+Result: 800 tokens used, all relevant
+= 60%+ more tokens available for thinking & coding
 ```
 
 ---
@@ -84,7 +92,11 @@ Result: 500 tokens used, all relevant
 
 ### You need Continuous-Claude first
 
-bloxcue is designed to work **alongside** [Continuous-Claude](https://github.com/bokiko/continuous-claude-guide). They're complementary:
+bloxcue is designed to work **alongside** Continuous-Claude. They're complementary tools that make Claude Code significantly more powerful.
+
+**What is Continuous-Claude?**
+
+Created by [Anand Chowdhary](https://github.com/AnandChowdhary), [Continuous-Claude](https://github.com/AnandChowdhary/continuous-claude) is a context management system that helps Claude "remember" your work across sessions through ledgers, handoffs, and learnings.
 
 | Tool | What it does |
 |------|--------------|
@@ -95,26 +107,53 @@ bloxcue is designed to work **alongside** [Continuous-Claude](https://github.com
 - Continuous-Claude = Claude's **memory** (what to remember)
 - bloxcue = Claude's **filing cabinet** (where to find it efficiently)
 
-If you haven't set up Continuous-Claude yet, do that first:
+**Install Continuous-Claude first using our guide:**
 ```bash
-# Install Continuous-Claude first
 git clone https://github.com/bokiko/continuous-claude-guide.git
 cd continuous-claude-guide
-# Follow the setup guide in the README
+# Follow the step-by-step setup in the README
 ```
+
+Or check out the [original repository](https://github.com/AnandChowdhary/continuous-claude) by Anand Chowdhary.
 
 ---
 
 ## Quick Start
 
-### Step 1: Clone bloxcue
+### The Easy Way (Recommended)
+
+**Let Claude install bloxcue for you!** This is the smoothest experience - Claude knows exactly how to set this up.
+
+Just tell Claude:
+
+```
+Please install bloxcue for me from https://github.com/bokiko/bloxcue
+Clone the repo, run the installer, and set everything up.
+```
+
+Claude will:
+1. Clone the repository
+2. Run the interactive installer
+3. Configure the hooks
+4. Set up your memory structure
+5. Guide you through any choices
+
+**That's it!** Claude handles the technical details. This is the recommended approach for most users.
+
+---
+
+### The Manual Way (Power Users)
+
+If you prefer to control every step, here's the manual installation:
+
+#### Step 1: Clone bloxcue
 
 ```bash
 git clone https://github.com/bokiko/bloxcue.git
 cd bloxcue
 ```
 
-### Step 2: Run the installer
+#### Step 2: Run the installer
 
 ```bash
 ./install.sh
@@ -122,69 +161,91 @@ cd bloxcue
 
 The installer will ask you a few simple questions:
 
-1. **Where to install?**
-   - Global (`~/.claude-memory`) - for stuff you use across all projects
-   - Project (`./claude-memory`) - for project-specific docs
-   - Both - recommended for most users
+**Question 1: Where to install?**
+- **Global** (`~/.claude-memory`) - for knowledge you use across all projects
+- **Project** (`./claude-memory`) - for project-specific docs only
+- **Both** - recommended for most users
 
-2. **How to organize?**
-   - By subject (infrastructure, runbooks, projects)
-   - By project (project-a, project-b)
-   - Minimal (just docs and notes)
+**Question 2: How to organize?**
+- **By subject** - infrastructure, guides, projects (best for general use)
+- **By project** - project-a, project-b (best for freelancers/agencies)
+- **Minimal** - just docs and notes (simplest option)
 
-3. **What categories do you need?**
-   - Pick what makes sense for you
+**Question 3: What categories do you need?**
 
-### Step 3: Add your first block
+Examples for common use cases:
 
-Create a markdown file in your memory folder:
+| Use Case | Suggested Categories |
+|----------|---------------------|
+| **Web Developer** | apis, databases, deployment, frontend, backend |
+| **DevOps/SysAdmin** | servers, networking, monitoring, security |
+| **Data Scientist** | datasets, models, notebooks, pipelines |
+| **Freelancer** | clients, contracts, templates, billing |
+| **Student** | courses, notes, assignments, research |
+| **General** | projects, guides, references, notes |
+
+Pick what makes sense for your work. You can always add more later.
+
+#### Step 3: Add your first block
+
+Create a markdown file in your memory folder. Here's an example:
 
 ```bash
-# Example: Add a server doc
-nano ~/.claude-memory/infrastructure/servers/plex-server.md
+nano ~/.claude-memory/guides/deployment.md
 ```
 
 ```markdown
 ---
-title: Plex Server
-category: infrastructure/servers
-tags: [plex, media, streaming]
+title: Production Deployment
+category: guides
+tags: [deployment, production, devops]
 ---
 
-# Plex Server
+# Production Deployment
 
-IP: 192.168.3.83
-SSH: ssh bokiko@192.168.3.83
+## Prerequisites
+- SSH access to production server
+- Environment variables configured
+- Database migrations ready
 
-## Restart
-sudo systemctl restart plexmediaserver
+## Deploy Steps
+1. Run tests locally
+2. Push to main branch
+3. SSH into server
+4. Pull latest changes
+5. Run migrations
+6. Restart services
 
-## Logs
-sudo journalctl -u plexmediaserver -f
+## Rollback
+If something breaks:
+1. Revert to previous commit
+2. Run down migrations
+3. Restart services
 ```
 
-### Step 4: Index your blocks
+#### Step 4: Index your blocks
 
 ```bash
 python3 ~/.claude-memory/scripts/indexer.py
 ```
 
-### Step 5: Test it
+#### Step 5: Test it
 
 ```bash
-# Search for your block
-python3 ~/.claude-memory/scripts/indexer.py --search "plex"
+python3 ~/.claude-memory/scripts/indexer.py --search "deployment"
 ```
 
-You should see your Plex server doc in the results!
+You should see your deployment guide in the results!
 
 ---
 
-## Part 2: Enable Auto-Retrieval (Optional but Recommended)
+## Enable Auto-Retrieval
 
-This is where the magic happens. Instead of manually searching, Claude automatically pulls relevant blocks when you mention keywords.
+**This step is required for bloxcue to work automatically.** Without this, you'd have to manually search every time.
 
-### Step 2.1: Add the hook
+> Want to disable auto-retrieval later? You can always remove the hook from your settings. But we recommend keeping it on - that's the whole point!
+
+### Step 1: Add the hook
 
 Edit your Claude settings:
 
@@ -207,15 +268,69 @@ Add this to your hooks section:
 }
 ```
 
-### Step 2.2: Test auto-retrieval
+### Step 2: Restart Claude Code
 
-Start a new Claude session and ask about something you documented:
+Close and reopen Claude Code for the changes to take effect.
+
+### Step 3: Test auto-retrieval
+
+Ask Claude about something you documented:
 
 ```
-You: "How do I check the Plex server logs?"
+You: "How do I deploy to production?"
 ```
 
-Claude will automatically receive the Plex server block as context - no manual search needed!
+Claude will automatically receive your deployment block as context - no manual search needed!
+
+---
+
+## For Existing Claude Users
+
+Already have a big `CLAUDE.md` file? Here's how to migrate:
+
+### Option A: Let Claude migrate for you (Recommended)
+
+Tell Claude:
+
+```
+I have an existing CLAUDE.md file that's gotten too big.
+Help me migrate it to bloxcue by:
+1. Reading my current CLAUDE.md
+2. Identifying distinct topics
+3. Creating separate block files for each topic
+4. Updating my CLAUDE.md to be minimal
+```
+
+Claude will handle the heavy lifting!
+
+### Option B: Migrate manually
+
+1. **Identify sections** in your current CLAUDE.md
+2. **Create a block file** for each major section
+3. **Move content** from CLAUDE.md to the appropriate blocks
+4. **Trim your CLAUDE.md** to just essentials:
+
+```markdown
+# My Workspace
+
+Knowledge base at `~/.claude-memory/`.
+Claude automatically retrieves relevant context via hooks.
+
+## Essential Info Only
+- Project: MyApp
+- Stack: Node.js, PostgreSQL
+```
+
+### For New Users / New Machines
+
+Starting fresh? Even easier:
+
+1. Install Continuous-Claude first
+2. Install bloxcue (let Claude do it!)
+3. Start with a minimal CLAUDE.md
+4. Add blocks as you go
+
+Your CLAUDE.md stays small forever because everything goes into blocks.
 
 ---
 
@@ -223,18 +338,20 @@ Claude will automatically receive the Plex server block as context - no manual s
 
 Real numbers from actual usage:
 
-| Metric | Before bloxcue | After bloxcue | Saved |
-|--------|----------------|---------------|-------|
-| Per prompt (average) | 8,649 tokens | 1,214 tokens | **86%** |
-| Per session (20 prompts) | 172,980 tokens | 17,160 tokens | **90%** |
-| Per month (150 sessions) | 25.9M tokens | 2.6M tokens | **90%** |
+| Metric | Before bloxcue | After bloxcue | Improvement |
+|--------|----------------|---------------|-------------|
+| Tokens per prompt | ~8,600 | ~1,200 | **86% reduction** |
+| Tokens per session | ~172,000 | ~24,000 | **86% reduction** |
+| Useful token ratio | ~10% | ~70%+ | **7x more efficient** |
 
-### Cost Savings (Claude Opus)
+### What this means for you
 
-| Period | Before | After | You Save |
-|--------|--------|-------|----------|
-| Per session | $2.59 | $0.26 | $2.34 |
-| Per month | $389 | $39 | **$350** |
+| Plan | Monthly Tokens | Before (wasted) | After (saved) |
+|------|----------------|-----------------|---------------|
+| **Pro** | ~45M tokens | 90% on context | 60%+ for thinking |
+| **Pro Max** | ~unlimited | Still wastes context window | Cleaner, faster responses |
+
+**Bottom line:** More tokens available for Claude to actually think about your problems instead of loading docs you don't need.
 
 ---
 
@@ -242,34 +359,30 @@ Real numbers from actual usage:
 
 ### By Subject (Default)
 
-Best for: Infrastructure, mixed projects, personal knowledge base
+Best for: General use, mixed work, personal knowledge base
 
 ```
 ~/.claude-memory/
-├── infrastructure/
-│   ├── servers/        # Server docs
-│   ├── network/        # Network configs
-│   └── services/       # Service runbooks
-├── projects/
-│   ├── _index.md       # Project list
-│   └── project-name/   # Per-project docs
-├── runbooks/           # How-to guides
-├── decisions/          # Why we chose X over Y
+├── guides/             # How-to guides
+├── references/         # Quick reference docs
+├── projects/           # Project-specific info
+├── configs/            # Configuration templates
+├── notes/              # General notes
 └── scripts/
     └── indexer.py      # Search engine
 ```
 
 ### By Project
 
-Best for: Multiple distinct projects with separate contexts
+Best for: Freelancers, agencies, multiple client work
 
 ```
 ~/.claude-memory/
-├── project-alpha/
-│   ├── architecture.md
+├── client-alpha/
+│   ├── requirements.md
 │   ├── api.md
-│   └── deployment.md
-├── project-beta/
+│   └── contacts.md
+├── client-beta/
 │   └── ...
 └── scripts/
 ```
@@ -296,27 +409,11 @@ python3 ~/.claude-memory/scripts/indexer.py --rebuild
 
 ## Best Practices
 
-1. **Keep your CLAUDE.md minimal** - Just point to the memory system
+1. **Keep your CLAUDE.md minimal** - Just essentials, let blocks handle details
 2. **One topic per file** - Better search precision
 3. **Use frontmatter** - Title, category, tags help indexing
-4. **Use descriptive tags** - `[plex, media, streaming]` not just `[server]`
+4. **Use descriptive tags** - `[deployment, production, aws]` not just `[deploy]`
 5. **Re-index after adding files** - Run the indexer after new docs
-
-### Example: Minimal CLAUDE.md
-
-After setting up bloxcue, your CLAUDE.md becomes tiny:
-
-```markdown
-# My Project
-
-Documentation lives in `~/.claude-memory/`.
-Claude automatically retrieves relevant context via hooks.
-
-## Quick Links
-- Infrastructure: ~/.claude-memory/infrastructure/
-- Runbooks: ~/.claude-memory/runbooks/
-- Projects: ~/.claude-memory/projects/
-```
 
 ---
 
@@ -350,7 +447,7 @@ A smaller CLAUDE.md means less information available. bloxcue means the right in
 <details>
 <summary><strong>What if Claude needs info from multiple blocks?</strong></summary>
 
-The retrieval hook can return multiple relevant blocks based on keyword matching. If you ask about "Plex deployment", it might return both the Plex server block and the deployment runbook.
+The retrieval hook can return multiple relevant blocks based on keyword matching. If you ask about "database deployment", it might return both the database block and the deployment block.
 </details>
 
 <details>
@@ -369,7 +466,13 @@ The installer supports setting up both.
 They're just markdown files! Back them up however you back up other files:
 - Git repo (recommended)
 - Cloud sync (Dropbox, iCloud, etc.)
-- rsync to a NAS
+- Any backup solution you already use
+</details>
+
+<details>
+<summary><strong>Can I disable auto-retrieval?</strong></summary>
+
+Yes, just remove the hook from your `~/.claude/settings.json`. But we recommend keeping it on - that's the whole point of bloxcue!
 </details>
 
 ---
@@ -399,6 +502,10 @@ sudo apt install python3
 2. Make sure the hook path is correct
 3. Restart Claude Code after changing settings
 
+### Already have a big CLAUDE.md?
+
+See the "For Existing Claude Users" section above - we've got you covered!
+
 ---
 
 ## Contributing
@@ -412,6 +519,12 @@ Ideas welcome! Some things we'd love help with:
 
 ---
 
+## Credits
+
+- [Anand Chowdhary](https://github.com/AnandChowdhary) - Creator of [Continuous-Claude](https://github.com/AnandChowdhary/continuous-claude)
+
+---
+
 ## License
 
 MIT - Use it however you want.
@@ -420,8 +533,6 @@ MIT - Use it however you want.
 
 <div align="center">
 
-**Part of the BLOX toolkit**
-
-[bloxchaser](https://github.com/bokiko/bloxchaser) | [BloxEye](https://github.com/bokiko/BloxEye) | **bloxcue**
+Made by [@bokiko](https://twitter.com/bokiko) · [bokiko.io](https://bokiko.io)
 
 </div>
