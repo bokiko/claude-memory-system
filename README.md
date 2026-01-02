@@ -23,7 +23,7 @@
 </p>
 
 <p>
-  <a href="https://bokiko.io">bokiko.io</a> · <a href="https://twitter.com/bokiko">@bokiko</a>
+  <a href="https://bokiko.io">bokiko.io</a> · <a href="https://twitter.com/bokiko">@bokiko</a> · <a href="https://medium.com/@bokiko/my-claude-md-got-too-big-so-i-built-bloxcue-91eca1e53059">Read the story on Medium</a>
 </p>
 
 </div>
@@ -38,15 +38,16 @@
 4. [Requirements](#requirements)
 5. [Quick Start](#quick-start) (Let Claude install it!)
 6. [Enable Auto-Retrieval](#enable-auto-retrieval)
-7. [For Existing Claude Users](#for-existing-claude-users)
-8. [Token Savings](#token-savings)
-9. [Directory Structure](#directory-structure)
-10. [Commands Reference](#commands-reference)
-11. [Best Practices](#best-practices)
-12. [FAQ](#faq)
-13. [Troubleshooting](#troubleshooting)
-14. [Security](#security)
-15. [Credits](#credits)
+7. [After Installation](#after-installation) ⚠️ Important!
+8. [For Existing Claude Users](#for-existing-claude-users)
+9. [Token Savings](#token-savings)
+10. [Directory Structure](#directory-structure)
+11. [Commands Reference](#commands-reference)
+12. [Best Practices](#best-practices)
+13. [FAQ](#faq)
+14. [Troubleshooting](#troubleshooting)
+15. [Security](#security)
+16. [Credits](#credits)
 
 ---
 
@@ -320,6 +321,40 @@ You: "How do I deploy to production?"
 Claude will automatically receive your deployment block as context - no manual search needed!
 
 > **Note:** If you used the "Easy Way" setup above, Claude already configured this for you.
+
+---
+
+## After Installation
+
+> ⚠️ **Important:** BloxCue is installed, but you're still wasting tokens until you slim your CLAUDE.md!
+
+The installer sets up the hooks and directory structure, but it doesn't automatically migrate your existing CLAUDE.md. If you have a large CLAUDE.md file, you're still loading all that content on every prompt.
+
+**Ask Claude to slim it for you:**
+
+```
+My CLAUDE.md has grown too big. Help me migrate content to BloxCue blocks:
+1. Read my current CLAUDE.md
+2. Identify distinct topics (deployment, APIs, configs, etc.)
+3. Create separate block files in ~/.claude-memory/
+4. Slim my CLAUDE.md to essentials only (project name, stack, minimal context)
+5. Re-index with: python3 ~/.claude-memory/scripts/indexer.py
+```
+
+**Your CLAUDE.md should end up looking like this:**
+
+```markdown
+# My Workspace
+
+Knowledge base at `~/.claude-memory/`.
+Claude retrieves relevant context automatically via hooks.
+
+## Essentials
+- Project: MyApp
+- Stack: Node.js, PostgreSQL, Redis
+```
+
+That's it! Everything else lives in your blocks and gets loaded only when needed.
 
 ---
 
