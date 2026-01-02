@@ -37,9 +37,9 @@ fi
 # Banner
 echo -e "${BLUE}"
 echo "╔═══════════════════════════════════════════════════════════╗"
-echo "║                    bloxcue installer                      ║"
+echo "║                    BloxCue Installer                      ║"
 echo "║         Context blocks for Claude Code                    ║"
-echo "║         Save 60%+ of your tokens                          ║"
+echo "║         Save 90% of your tokens                           ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
 echo -e "${NC}"
 
@@ -311,6 +311,10 @@ SETTINGS_FILE="$HOME/.claude/settings.json"
 HOOK_ENTRY='"UserPromptSubmit": [{"hooks": [{"type": "command", "command": "~/.claude/hooks/memory-retrieve.sh"}]}]'
 
 if [ -f "$SETTINGS_FILE" ]; then
+    # Create backup before any modification
+    BACKUP_FILE="$HOME/.claude/settings.json.backup.$(date +%Y%m%d_%H%M%S)"
+    cp "$SETTINGS_FILE" "$BACKUP_FILE"
+    echo "  ✓ Backup created: $BACKUP_FILE"
     # Check if hooks section already contains our hook
     if grep -q "memory-retrieve.sh" "$SETTINGS_FILE" 2>/dev/null; then
         echo "  ✓ Hook already in settings.json"
@@ -368,7 +372,7 @@ done
 # ============================================
 echo ""
 echo -e "${BLUE}╔═══════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║                   ✓ bloxcue installed!                    ║${NC}"
+echo -e "${BLUE}║                   ✓ BloxCue installed!                    ║${NC}"
 echo -e "${BLUE}╚═══════════════════════════════════════════════════════════╝${NC}"
 echo ""
 echo -e "${GREEN}Your context blocks are ready at:${NC}"
@@ -396,5 +400,5 @@ echo "  Index:   python3 ${INSTALL_PATHS[0]}/scripts/indexer.py"
 echo "  Search:  python3 ${INSTALL_PATHS[0]}/scripts/indexer.py --search \"keyword\""
 echo "  List:    python3 ${INSTALL_PATHS[0]}/scripts/indexer.py --list"
 echo ""
-echo -e "${GREEN}Enjoy 60%+ token savings!${NC}"
+echo -e "${GREEN}Enjoy 90% token savings!${NC}"
 echo ""

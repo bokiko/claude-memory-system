@@ -32,12 +32,16 @@ INPUT=$(cat)
 
 debug_log "Received input"
 
-# Extract user message using Python
+# Extract and sanitize user message using Python
 USER_MESSAGE=$(echo "$INPUT" | python3 -c "
-import sys, json
+import sys, json, re
 try:
     data = json.load(sys.stdin)
-    print(data.get('user_prompt', ''))
+    msg = data.get('user_prompt', '')
+    # Sanitize: remove control characters and limit length
+    msg = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', msg)
+    msg = msg[:500]  # Limit to 500 chars for search
+    print(msg)
 except Exception as e:
     pass
 " 2>/dev/null)

@@ -430,6 +430,18 @@ def main():
         filepath = Path(args.file)
         if not filepath.is_absolute():
             filepath = MEMORY_DIR / filepath
+
+        # Security: Validate file is within MEMORY_DIR
+        try:
+            filepath = filepath.resolve()
+            memory_dir_resolved = MEMORY_DIR.resolve()
+            if not str(filepath).startswith(str(memory_dir_resolved)):
+                print(f"Error: File must be within {MEMORY_DIR}", file=sys.stderr)
+                sys.exit(1)
+        except Exception as e:
+            print(f"Error validating path: {e}", file=sys.stderr)
+            sys.exit(1)
+
         print(f"Indexing: {filepath}")
         index = build_index(single_file=filepath)
         print(f"✓ Index updated")
